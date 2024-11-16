@@ -1,24 +1,25 @@
 <?php
 
-use App\Http\Controllers\LendingController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
+use App\Http\Middleware\Admin;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+//bárki által elérhető
+Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+Route::post('/register',[RegisteredUserController::class, 'store']);
 
-//User végpontok
-Route::get('/users', [UserController::class, 'index']);
-Route::get('/users/{id}', [UserController::class, 'show']);
-Route::post('/users', [UserController::class, 'store']);
-Route::put('/users/{id}', [UserController::class, 'update']);
-Route::delete('/users/{id}', [UserController::class, 'destroy']);
+//autentikált útvonal
+Route::middleware(['auth:sanctum'])
+    ->group(function () {
 
-//Lending végpontok
-Route::get('/lendings', [LendingController::class, 'index']);
-Route::get('/lendings/{user_id}/{copy_id}/{start}', [LendingController::class, 'show']);
-Route::post('/lendings', [LendingController::class, 'store']);
-//Route::put('/lendings/{user_id}/{copy_id}/{start}', [LendingController::class, 'update']);
-Route::delete('/lendings/{user_id}/{copy_id}/{start}', [LendingController::class, 'destroy']);
+        // Kijelentkezés útvonal
+        Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+    });
+
+Route::middleware(['auth:sanctum', Admin::class])
+    ->group(function () {
+        //Route::get('/admin/users', [UserController::class, 'index']);
+        Route::apiResource('/admin/users', UserController::class);
+    });
